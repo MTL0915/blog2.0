@@ -12,7 +12,7 @@
         :class="[item.cls, { clickable: item.modal }]"
         @mouseenter="item.hovered = true"
         @mouseleave="item.hovered = false"
-        @click="item.modal && (modalOpen = true)"
+        @click="item.modal && openModal(item.modalType)"
       >
         <div
           class="portfolio-thumb"
@@ -41,53 +41,77 @@
     </div>
   </section>
 
-  <WorkDetailModal :visible="modalOpen" @close="modalOpen = false" />
+  <WorkDetailModal    :visible="lolModalOpen"      @close="lolModalOpen = false" />
+  <ElderlyHomeModal   :visible="elderlyModalOpen"  @close="elderlyModalOpen = false" />
+  <DigitalHumanModal  :visible="digitalModalOpen"  @close="digitalModalOpen = false" />
+  <PhotoRestoreModal  :visible="photoModalOpen"    @close="photoModalOpen = false" />
+  <OpenClawModal      :visible="openclawModalOpen" @close="openclawModalOpen = false" />
 </template>
 
 <script setup>
 import { reactive, ref } from 'vue'
 import { useReveal } from '../composables/useReveal'
-import lolCover from '../assets/英雄联盟-封面.png'
-import WorkDetailModal from './WorkDetailModal.vue'
+import lolCover     from '../assets/英雄联盟-封面.png'
+import elderlyCover from '../assets/适老化家居-封面.png'
+import jingtianCover from '../assets/景田-封面.jpg'
+import oldPhotoCover from '../assets/老照片-封面.png'
+import openclawCover from '../assets/龙虾-封面.png'
+import WorkDetailModal   from './WorkDetailModal.vue'
+import ElderlyHomeModal  from './ElderlyHomeModal.vue'
+import DigitalHumanModal from './DigitalHumanModal.vue'
+import PhotoRestoreModal from './PhotoRestoreModal.vue'
+import OpenClawModal     from './OpenClawModal.vue'
 
 useReveal()
 
-const modalOpen = ref(false)
+const lolModalOpen      = ref(false)
+const elderlyModalOpen  = ref(false)
+const digitalModalOpen  = ref(false)
+const photoModalOpen    = ref(false)
+const openclawModalOpen = ref(false)
+
+function openModal(type) {
+  if (type === 'lol')      lolModalOpen.value      = true
+  if (type === 'elderly')  elderlyModalOpen.value   = true
+  if (type === 'digital')  digitalModalOpen.value   = true
+  if (type === 'photo')    photoModalOpen.value     = true
+  if (type === 'openclaw') openclawModalOpen.value  = true
+}
 
 const works = reactive([
   {
-    cls: 'p1', icon: null, cover: lolCover, modal: true,
-    cat: 'AI 生成艺术 · 2024', catLabel: 'AI 生成艺术',
+    cls: 'p1', icon: null, cover: lolCover, modal: true, modalType: 'lol',
+    cat: 'AI 生成艺术 · 2026', catLabel: 'AI 视频',
     title: '《英雄联盟》系列视觉作品',
     desc: '以英雄联盟世界观为主题创作的系列视觉海报，融合真实人物与游戏角色，呈现史诗对决感。',
     hovered: false,
   },
   {
-    cls: 'p2', icon: '🌸',
-    cat: 'UI 设计 · 2024', catLabel: 'UI/UX 设计',
-    title: 'MedAI 医疗数据平台',
-    desc: '为医疗 AI 公司设计的数据可视化 Dashboard，复杂信息清晰呈现。',
+    cls: 'p2', icon: null, cover: elderlyCover, modal: true, modalType: 'elderly',
+    cat: 'AI 落地案例', catLabel: '图片设计',
+    title: '适老化家居配图讲解',
+    desc: '为适老化家居场景设计的配套图文物料，从画风固定到 AI 生图再到样板间落地。',
     hovered: false,
   },
   {
-    cls: 'p3', icon: '🎬',
-    cat: 'AI 视频 · 2025', catLabel: 'AI 视频创作',
-    title: '品牌宣传片 AI 制作',
-    desc: '使用 Sora + Runway 为科技品牌制作的 60s 宣传片，全流程 AI 辅助。',
+    cls: 'p3', icon: null,cover: jingtianCover, modal: true, modalType: 'digital',
+    cat: 'AI 数字人 · 2026', catLabel: 'AI 带货视频',
+    title: 'AI 数字人带货视频',
+    desc: '借助「即创」数字人工具 + ChatGPT/Kimi 脚本 + 寻鱼素材，智能生成口型对准的带货视频。',
     hovered: false,
   },
   {
-    cls: 'p4', icon: '🤝',
-    cat: '产品设计 · 2024', catLabel: '产品设计',
-    title: '智能客服 Bot UI',
-    desc: '为电商平台设计的 AI 客服界面，NPS 提升 34%。',
+    cls: 'p4', icon: null,cover: oldPhotoCover, modal: true, modalType: 'photo',
+    cat: 'AI 修复 · 2026', catLabel: 'AI 老照片修复',
+    title: 'AI 老照片高清修复',
+    desc: '以 ComfyUI 工作流为主、PS 为辅，高清放大修复老照片，可配合 AI 视频实现商业变现。',
     hovered: false,
   },
   {
-    cls: 'p5', icon: '📊',
-    cat: '数据可视化 · 2025', catLabel: '数据可视化',
-    title: '实时 AI 监控看板',
-    desc: '企业级 AI 模型运行状态监控系统，支持多模型并行对比。',
+    cls: 'p5', icon: null,cover: openclawCover, modal: true, modalType: 'openclaw',
+    cat: 'AI 自动化 · 2026', catLabel: 'AI 远程操控',
+    title: '养龙虾 OpenClaw',
+    desc: '腾讯云部署 OpenClaw，通过 QQ 聊天远程操控电脑，多 Skills 组合完成复杂自动化任务。',
     hovered: false,
   },
 ])
@@ -128,7 +152,6 @@ section {
 .portfolio-card:hover { transform: scale(1.025); box-shadow: 0 20px 60px rgba(249,115,22,0.2); }
 .portfolio-card.clickable { cursor: pointer; }
 
-/* click hint badge */
 .click-hint {
   position: absolute; top: 16px; right: 16px; z-index: 5;
   display: flex; align-items: center; gap: 6px;
@@ -150,9 +173,9 @@ section {
 }
 .p1 .portfolio-thumb { background: #111; }
 .p2 .portfolio-thumb { background: linear-gradient(135deg,#fce4ec,#f8bbd0,#f48fb1); }
-.p3 .portfolio-thumb { background: linear-gradient(135deg,#fff8e1,#ffe082,#ffd54f); }
-.p4 .portfolio-thumb { background: linear-gradient(135deg,#fbe9e7,#ffccbc,#ffab91); }
-.p5 .portfolio-thumb { background: linear-gradient(135deg,#fff3e0,#ffe0b2,#ffcc80); }
+.p3 .portfolio-thumb { background: linear-gradient(135deg,#e0f2fe,#bae6fd,#7dd3fc); }
+.p4 .portfolio-thumb { background: linear-gradient(135deg,#fef3c7,#fde68a,#c4963a); }
+.p5 .portfolio-thumb { background: linear-gradient(135deg,#dcfce7,#86efac,#22c55e44); }
 .thumb-glow {
   position: absolute; inset: 0;
   background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.4), transparent 70%);
@@ -177,7 +200,6 @@ section {
 .portfolio-title { font-size: 20px; font-weight: 700; font-family: 'Space Grotesk',sans-serif; color: #fff; }
 .portfolio-desc { font-size: 13px; color: rgba(255,255,255,0.75); margin-top: 6px; line-height: 1.5; }
 
-/* overlay transition */
 .overlay-enter-active, .overlay-leave-active { transition: opacity .35s ease; }
 .overlay-enter-from, .overlay-leave-to { opacity: 0; }
 
