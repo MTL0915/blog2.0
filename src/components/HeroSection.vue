@@ -34,11 +34,26 @@
     <div class="hero-right">
       <div class="right-inner">
 
+        <!-- cat video card -->
+        <div class="video-card">
+          <video
+            :src="catVideo"
+            class="cat-video"
+            autoplay muted loop playsinline
+          />
+          <div class="video-label">
+            <span class="video-tag">🐱 Pika · AI 生成</span>
+            <span class="video-hint">来~过来~欢迎联系⬇️下方小哥</span>
+          </div>
+        </div>
+
         <!-- profile card -->
         <div class="profile-card">
           <div class="avatar">
             <div class="avatar-ring" />
-            <div class="avatar-inner">🧑‍💻</div>
+            <div class="avatar-inner">
+              <img :src="avatarImg" alt="马天乐" class="avatar-photo" />
+            </div>
           </div>
           <div class="profile-info">
             <div class="profile-name">马天乐</div>
@@ -78,14 +93,15 @@
 
 <script setup>
 import { reactive, onMounted } from 'vue'
+import avatarImg from '../assets/头像.png'
+import catVideo  from '../assets/pika猫.mp4'
 
 const skills = [
   { name: '文生图',  pct: 95, color: '#f97316' },
   { name: '图生视频', pct: 88, color: '#e11d48' },
   { name: '编程语言JS',    pct: 98, color: '#f59e0b' },
   { name: 'comfy工作流', pct: 90, color: '#fb7185' },
-  { name: 'Photoshop', pct: 85, color: '#fa8634' },
-  { name: '剪映', pct: 80, color: '#abcdef' },
+  { name: 'Photoshop', pct: 85, color: '#abcdef' }
 ]
 
 const stats = reactive([
@@ -226,6 +242,37 @@ section {
   display: flex; flex-direction: column; gap: 16px;
 }
 
+/* Video card */
+.video-card {
+  position: relative;
+  border-radius: 20px; overflow: hidden;
+  border: 1.5px solid rgba(249,115,22,0.14);
+  box-shadow: 0 8px 32px rgba(249,115,22,0.10);
+  background: #111;
+  aspect-ratio: 16/9;
+}
+.cat-video {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+.video-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 20px 16px 14px;
+  background: linear-gradient(to top, rgba(28,10,0,0.72), transparent);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.video-tag {
+  font-size: 12px; font-weight: 600; color: #fff;
+  background: rgba(249,115,22,0.35);
+  border: 1px solid rgba(249,115,22,0.5);
+  padding: 3px 10px; border-radius: 100px;
+  backdrop-filter: blur(6px);
+}
+.video-hint {
+  font-size: 11px; color: rgba(255,255,255,0.55);
+  letter-spacing: .3px;
+}
+
 /* Profile card */
 .profile-card {
   background: rgba(255,255,255,0.65);
@@ -237,7 +284,7 @@ section {
   text-align: center;
 }
 .avatar {
-  position: relative; width: 72px; height: 72px;
+  position: relative; width: 100px; height: 100px;
 }
 .avatar-ring {
   position: absolute; inset: -3px; border-radius: 50%;
@@ -246,11 +293,17 @@ section {
 }
 .avatar-inner {
   position: relative; z-index: 1;
-  width: 72px; height: 72px; border-radius: 50%;
+  width: 100px; height: 100px; border-radius: 50%;
   background: #fff8f0;
   display: flex; align-items: center; justify-content: center;
   font-size: 32px;
   border: 2px solid #fff;
+  overflow: hidden;
+}
+.avatar-photo {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  border-radius: 50%;
 }
 .profile-name {
   font-family: 'Space Grotesk', sans-serif;

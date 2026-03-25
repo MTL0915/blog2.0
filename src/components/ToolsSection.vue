@@ -35,12 +35,14 @@ const tools = [
   { name:'Runway',      logo:'🎬', tag:'视频生成', color:'#dc2626', url:'https://runway.com',                   desc:'AI 视频生成与编辑，Gen-3 模型支持精准运动控制。' },
   { name:'Figma AI',    logo:'🖼️', tag:'设计工具', color:'#f97316', url:'https://www.figma.com',               desc:'设计界标准工具，内置 AI 辅助设计和原型生成功能。' },
   { name:'Cursor',      logo:'⌨️', tag:'编程助手', color:'#7c3aed', url:'https://cursor.sh',                   desc:'AI 驱动的代码编辑器，Composer 模式可整项目生成代码。' },
-  { name:'Perplexity',  logo:'🔍', tag:'AI 搜索',  color:'#0891b2', url:'https://perplexity.ai',               desc:'AI 搜索引擎，实时联网检索并给出结构化引用回答。' },
-  { name:'ElevenLabs',  logo:'🎙️', tag:'语音 AI',  color:'#ea580c', url:'https://elevenlabs.io',               desc:'超拟真 AI 语音合成，支持声音克隆与多语言配音。' },
-  { name:'Notion AI',   logo:'📝', tag:'效率工具', color:'#92400e', url:'https://www.notion.so/product/ai',    desc:'工作空间内置 AI，文档写作、摘要、数据库查询一站式。' },
   { name:'Pika',        logo:'🌀', tag:'视频 AI',  color:'#db2777', url:'https://pika.art',                    desc:'图生视频神器，简单操作让静态图片动起来，效果惊艳。' },
-  { name:'HeyGen',      logo:'🧑‍💼', tag:'数字人',  color:'#16a34a', url:'https://www.heygen.com',              desc:'AI 数字人视频，输入文字自动生成真人口播，支持中文。' },
   { name:'Suno',        logo:'🎵', tag:'音乐生成', color:'#d97706', url:'https://suno.ai',                     desc:'AI 音乐创作，输入风格描述直接生成带歌词的完整歌曲。' },
+  { name:'即梦',        logo:'🦄', tag:'图像生成', color:'#e25706', url:'https://jimeng.jianying.com',         desc:'AI 图像生成，输入描述直接生成高质量图像。' },
+  { name:'仙宫云',        logo:'💭', tag:'GPU租赁', color:'#e58723', url:'https://www.xiangongyun.com',         desc:'GPU 租赁服务，为 AI 训练提供强大算力支持。' },
+  { name:'Pinterest',     logo:'🅿️', tag:'图片参考', color:'#f84053', url:'https://www.pinterest.com',         desc:'图片参考平台，灵感获取的好去处。' },
+  { name:'佐糖',     logo:'🍬', tag:'免费抠图', color:'#d45832', url:'https://picwish.cn',         desc:'图片快速抠图工具，操作简单便捷。' },
+  { name:'Google AI Studio',     logo:'🌾', tag:'谷歌大模型', color:'#a84832', url:'https://aistudio.google.com',         desc:'谷歌系列 AI 工具，支持多种 AI 模型。' },
+  { name:'LeaderAI',     logo:'📃', tag:'提示词仓库', color:'#b35784', url:'https://www.leaderai.top/mid-api/lab/image_prompt/index.html',         desc:'提示词仓库，数万种类提示词可供选择。' },
 ]
 </script>
 
