@@ -22,10 +22,10 @@
         v-for="(item, idx) in works"
         :key="item.id"
         class="portfolio-card"
-        :class="[`p${idx + 1}`, { clickable: item.modalType }]"
+        :class="[`p${idx + 1}`, { clickable: item.clickable }]"
         @mouseenter="item.hovered = true"
         @mouseleave="item.hovered = false"
-        @click="item.modalType && openModal(item.modalType)"
+        @click="item.clickable && openModal(item)"
       >
         <div
           class="portfolio-thumb"
@@ -33,7 +33,7 @@
         >
           <div class="thumb-glow" />
         </div>
-        <div v-if="item.modalType" class="click-hint">
+        <div v-if="item.clickable" class="click-hint">
           <span>查看详情</span>
           <span class="hint-arrow">↗</span>
         </div>
@@ -57,10 +57,11 @@
   <DigitalHumanModal  :visible="digitalModalOpen"  @close="digitalModalOpen = false" />
   <PhotoRestoreModal  :visible="photoModalOpen"    @close="photoModalOpen = false" />
   <OpenClawModal      :visible="openclawModalOpen" @close="openclawModalOpen = false" />
+  <GenericWorkModal   :visible="genericOpen"       :work="genericWork" @close="genericOpen = false" />
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useReveal } from '../composables/useReveal'
 import { fetchWorks, resolveAsset } from '../api'
 import WorkDetailModal   from './WorkDetailModal.vue'
@@ -68,6 +69,7 @@ import ElderlyHomeModal  from './ElderlyHomeModal.vue'
 import DigitalHumanModal from './DigitalHumanModal.vue'
 import PhotoRestoreModal from './PhotoRestoreModal.vue'
 import OpenClawModal     from './OpenClawModal.vue'
+import GenericWorkModal  from './GenericWorkModal.vue'
 
 useReveal()
 
@@ -81,16 +83,27 @@ const digitalModalOpen  = ref(false)
 const photoModalOpen    = ref(false)
 const openclawModalOpen = ref(false)
 
-function openModal(type) {
-  if (type === 'lol')      lolModalOpen.value      = true
-  if (type === 'elderly')  elderlyModalOpen.value   = true
-  if (type === 'digital')  digitalModalOpen.value   = true
-  if (type === 'photo')    photoModalOpen.value     = true
-  if (type === 'openclaw') openclawModalOpen.value  = true
+// 通用 Modal
+const genericOpen = ref(false)
+const genericWork = ref(null)
+
+function openModal(item) {
+  // 受保护作品 → 走旧的专属 Modal
+  if (item.is_locked && item.modalType) {
+    if (item.modalType === 'lol')      lolModalOpen.value = true
+    if (item.modalType === 'elderly')  elderlyModalOpen.value = true
+    if (item.modalType === 'digital')  digitalModalOpen.value = true
+    if (item.modalType === 'photo')    photoModalOpen.value = true
+    if (item.modalType === 'openclaw') openclawModalOpen.value = true
+    return
+  }
+  // 通用作品(且有内容) → 走通用 Modal
+  if (item.canOpenGeneric) {
+    genericWork.value = item
+    genericOpen.value = true
+  }
 }
 
-// 根据作品标题智能匹配旧的 Modal 类型
-// 规则:数据库里如果新增的作品,标题没有这些关键词,就不弹窗(将来可以做后台编辑)
 function pickModalType(title) {
   if (!title) return null
   if (title.includes('英雄联盟'))   return 'lol'
@@ -101,26 +114,35 @@ function pickModalType(title) {
   return null
 }
 
+// 判断通用作品是否值得显示"查看详情"
+function hasGenericContent(w) {
+  if (Array.isArray(w.modal_blocks) && w.modal_blocks.length > 0) return true
+  return false
+}
+
 onMounted(async () => {
   try {
     const data = await fetchWorks()
-    works.value = data.map(w => ({
-      ...w,
-      cover: resolveAsset(w.cover_url),
-      modalType: pickModalType(w.title),
-      hovered: false
-    }))
+    works.value = data.map(w => {
+      const isLocked = !!w.is_locked
+      const modalType = isLocked ? pickModalType(w.title) : null
+      const canOpenGeneric = !isLocked && hasGenericContent(w)
+      return {
+        ...w,
+        cover: resolveAsset(w.cover_url),
+        modalType,
+        canOpenGeneric,
+        clickable: (isLocked && modalType) || canOpenGeneric,
+        hovered: false
+      }
+    })
   } catch (err) {
     error.value = err.message || '网络错误'
   } finally {
     loading.value = false
-    // 数据加载完后,再次触发 reveal 检测(因为新元素是动态插入的)
-    await nextTick()
-    window.dispatchEvent(new Event('scroll'))
   }
 })
 </script>
-
 <style scoped>
 section {
   position: relative; z-index: 2;
