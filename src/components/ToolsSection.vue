@@ -4,19 +4,34 @@
       <div class="section-tag">工具生态</div>
       <h2 class="section-title">常用 <span>AI 工具</span></h2>
     </div>
-    <div class="tools-grid reveal">
+
+    <div v-if="loading" class="loading-state reveal">
+      <div class="loading-spinner"></div>
+      <p>正在加载工具...</p>
+    </div>
+
+    <div v-else-if="error" class="error-state reveal">
+      <p>⚠️ 加载失败:{{ error }}</p>
+    </div>
+
+    <div v-else class="tools-grid reveal">
       <a
         v-for="tool in tools"
-        :key="tool.name"
+        :key="tool.id"
         :href="tool.url"
         target="_blank"
+        rel="noopener noreferrer"
         class="tool-card"
         :style="{ '--c': tool.color }"
       >
         <div class="tool-logo">{{ tool.logo }}</div>
         <div class="tool-name">{{ tool.name }}</div>
-        <div class="tool-desc">{{ tool.desc }}</div>
-        <span class="tool-tag" :style="{ background: tool.color + '18', color: tool.color, border: '1px solid ' + tool.color + '33' }">
+        <div class="tool-desc">{{ tool.description }}</div>
+        <span
+          v-if="tool.tag"
+          class="tool-tag"
+          :style="{ background: tool.color + '18', color: tool.color, border: '1px solid ' + tool.color + '33' }"
+        >
           {{ tool.tag }}
         </span>
       </a>
@@ -25,25 +40,27 @@
 </template>
 
 <script setup>
+import { ref, onMounted, nextTick } from 'vue'
 import { useReveal } from '../composables/useReveal'
+import { fetchTools } from '../api'
+
 useReveal()
 
-const tools = [
-  { name:'Claude',      logo:'🤖', tag:'对话 AI',  color:'#f97316', url:'https://claude.ai',                    desc:'Anthropic 出品，逻辑推理与长文本处理顶尖水平。' },
-  { name:'ChatGPT',     logo:'✨', tag:'对话 AI',  color:'#10b981', url:'https://chat.openai.com',              desc:'OpenAI 旗舰，支持 GPT-4o 多模态能力，生态最完善。' },
-  { name:'Midjourney',  logo:'🎨', tag:'图像生成', color:'#e11d48', url:'https://www.midjourney.com',           desc:'目前画质最强的 AI 图像生成工具，商业设计首选。' },
-  { name:'Runway',      logo:'🎬', tag:'视频生成', color:'#dc2626', url:'https://runway.com',                   desc:'AI 视频生成与编辑，Gen-3 模型支持精准运动控制。' },
-  { name:'Figma AI',    logo:'🖼️', tag:'设计工具', color:'#f97316', url:'https://www.figma.com',               desc:'设计界标准工具，内置 AI 辅助设计和原型生成功能。' },
-  { name:'Cursor',      logo:'⌨️', tag:'编程助手', color:'#7c3aed', url:'https://cursor.sh',                   desc:'AI 驱动的代码编辑器，Composer 模式可整项目生成代码。' },
-  { name:'Pika',        logo:'🌀', tag:'视频 AI',  color:'#db2777', url:'https://pika.art',                    desc:'图生视频神器，简单操作让静态图片动起来，效果惊艳。' },
-  { name:'Suno',        logo:'🎵', tag:'音乐生成', color:'#d97706', url:'https://suno.ai',                     desc:'AI 音乐创作，输入风格描述直接生成带歌词的完整歌曲。' },
-  { name:'即梦',        logo:'🦄', tag:'图像生成', color:'#e25706', url:'https://jimeng.jianying.com',         desc:'AI 图像生成，输入描述直接生成高质量图像。' },
-  { name:'仙宫云',        logo:'💭', tag:'GPU租赁', color:'#e58723', url:'https://www.xiangongyun.com',         desc:'GPU 租赁服务，为 AI 训练提供强大算力支持。' },
-  { name:'Pinterest',     logo:'🅿️', tag:'图片参考', color:'#f84053', url:'https://www.pinterest.com',         desc:'图片参考平台，灵感获取的好去处。' },
-  { name:'佐糖',     logo:'🍬', tag:'免费抠图', color:'#d45832', url:'https://picwish.cn',         desc:'图片快速抠图工具，操作简单便捷。' },
-  { name:'Google AI Studio',     logo:'🌾', tag:'谷歌大模型', color:'#a84832', url:'https://aistudio.google.com',         desc:'谷歌系列 AI 工具，支持多种 AI 模型。' },
-  { name:'LeaderAI',     logo:'📃', tag:'提示词仓库', color:'#b35784', url:'https://www.leaderai.top/mid-api/lab/image_prompt/index.html',         desc:'提示词仓库，数万种类提示词可供选择。' },
-]
+const tools = ref([])
+const loading = ref(true)
+const error = ref('')
+
+onMounted(async () => {
+  try {
+    tools.value = await fetchTools()
+  } catch (err) {
+    error.value = err.message || '网络错误'
+  } finally {
+    loading.value = false
+    await nextTick()
+    window.dispatchEvent(new Event('scroll'))
+  }
+})
 </script>
 
 <style scoped>
@@ -67,6 +84,16 @@ section {
   background: linear-gradient(135deg, var(--accent), var(--accent2));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
+
+.loading-state, .error-state {
+  text-align: center; padding: 60px 20px; color: var(--muted); font-size: 14px;
+}
+.loading-spinner {
+  width: 36px; height: 36px; border: 3px solid rgba(249,115,22,0.15);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.9s linear infinite; margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 16px; }
 

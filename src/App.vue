@@ -1,12 +1,9 @@
 <template>
   <div id="app-root">
-    <!-- Cursor glow -->
     <div class="cursor-glow" :style="{ left: cursor.x + 'px', top: cursor.y + 'px' }" />
 
-    <!-- Particle background -->
     <ParticleCanvas />
 
-    <!-- Layout -->
     <NavBar />
     <main>
       <HeroSection />
@@ -18,13 +15,13 @@
       <ToolsSection />
     </main>
     <footer>
-      <p>© 2026 马天乐的 AI 网站 — 用 AI 创造更好的数字世界 ✦</p>
+      <p>{{ footerText }}</p>
     </footer>
   </div>
 </template>
 
 <script setup>
-import { reactive, onMounted, onUnmounted } from 'vue'
+import { reactive, ref, onMounted, onUnmounted } from 'vue'
 import ParticleCanvas   from './components/ParticleCanvas.vue'
 import NavBar           from './components/NavBar.vue'
 import HeroSection      from './components/HeroSection.vue'
@@ -32,10 +29,23 @@ import SkillsSection    from './components/SkillsSection.vue'
 import PortfolioSection from './components/PortfolioSection.vue'
 import ToolsSection     from './components/ToolsSection.vue'
 import SiteDivider      from './components/SiteDivider.vue'
+import { fetchConfig }  from './api'
 
 const cursor = reactive({ x: -500, y: -500 })
 function onMouseMove(e) { cursor.x = e.clientX; cursor.y = e.clientY }
-onMounted(() => window.addEventListener('mousemove', onMouseMove))
+
+const footerText = ref('© 2026 马天乐的 AI 网站 — 用 AI 创造更好的数字世界 ✦')
+
+onMounted(async () => {
+  window.addEventListener('mousemove', onMouseMove)
+  // 拉站点配置(失败也不影响,有兜底文字)
+  try {
+    const config = await fetchConfig()
+    if (config.footer_text) footerText.value = config.footer_text
+  } catch (e) {
+    // 静默失败,不影响整体显示
+  }
+})
 onUnmounted(() => window.removeEventListener('mousemove', onMouseMove))
 </script>
 

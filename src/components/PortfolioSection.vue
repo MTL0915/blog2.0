@@ -4,25 +4,36 @@
       <div class="section-tag">精选作品</div>
       <h2 class="section-title">创意<span>作品集</span></h2>
     </div>
-    <div class="portfolio-grid reveal">
+
+    <!-- 加载态 -->
+    <div v-if="loading" class="loading-state reveal">
+      <div class="loading-spinner"></div>
+      <p>正在加载作品...</p>
+    </div>
+
+    <!-- 错误态 -->
+    <div v-else-if="error" class="error-state reveal">
+      <p>⚠️ 加载失败:{{ error }}</p>
+    </div>
+
+    <!-- 内容 -->
+    <div v-else class="portfolio-grid reveal">
       <div
-        v-for="item in works"
-        :key="item.title"
+        v-for="(item, idx) in works"
+        :key="item.id"
         class="portfolio-card"
-        :class="[item.cls, { clickable: item.modal }]"
+        :class="[`p${idx + 1}`, { clickable: item.modalType }]"
         @mouseenter="item.hovered = true"
         @mouseleave="item.hovered = false"
-        @click="item.modal && openModal(item.modalType)"
+        @click="item.modalType && openModal(item.modalType)"
       >
         <div
           class="portfolio-thumb"
           :style="item.cover ? { backgroundImage: `url(${item.cover})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}"
         >
           <div class="thumb-glow" />
-          <div v-if="item.icon" class="thumb-icon">{{ item.icon }}</div>
         </div>
-        <!-- click hint for modal cards -->
-        <div v-if="item.modal" class="click-hint">
+        <div v-if="item.modalType" class="click-hint">
           <span>查看详情</span>
           <span class="hint-arrow">↗</span>
         </div>
@@ -32,9 +43,9 @@
         </div>
         <Transition name="overlay">
           <div v-if="item.hovered" class="portfolio-overlay">
-            <div class="portfolio-cat">{{ item.catLabel }}</div>
+            <div class="portfolio-cat">{{ item.cat_label }}</div>
             <div class="portfolio-title">{{ item.title }}</div>
-            <div class="portfolio-desc">{{ item.desc }}</div>
+            <div class="portfolio-desc">{{ item.description }}</div>
           </div>
         </Transition>
       </div>
@@ -49,13 +60,9 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useReveal } from '../composables/useReveal'
-import lolCover     from '../assets/英雄联盟-封面.png'
-import elderlyCover from '../assets/适老化家居-封面.png'
-import jingtianCover from '../assets/景田-封面.jpg'
-import oldPhotoCover from '../assets/老照片-封面.png'
-import openclawCover from '../assets/龙虾-封面.png'
+import { fetchWorks, resolveAsset } from '../api'
 import WorkDetailModal   from './WorkDetailModal.vue'
 import ElderlyHomeModal  from './ElderlyHomeModal.vue'
 import DigitalHumanModal from './DigitalHumanModal.vue'
@@ -63,6 +70,10 @@ import PhotoRestoreModal from './PhotoRestoreModal.vue'
 import OpenClawModal     from './OpenClawModal.vue'
 
 useReveal()
+
+const works = ref([])
+const loading = ref(true)
+const error = ref('')
 
 const lolModalOpen      = ref(false)
 const elderlyModalOpen  = ref(false)
@@ -78,43 +89,36 @@ function openModal(type) {
   if (type === 'openclaw') openclawModalOpen.value  = true
 }
 
-const works = reactive([
-  {
-    cls: 'p1', icon: null, cover: lolCover, modal: true, modalType: 'lol',
-    cat: 'AI 生成艺术 · 2026', catLabel: 'AI 视频',
-    title: '《英雄联盟》系列视觉作品',
-    desc: '以英雄联盟世界观为主题创作的系列视觉海报，融合真实人物与游戏角色，呈现史诗对决感。',
-    hovered: false,
-  },
-  {
-    cls: 'p2', icon: null, cover: elderlyCover, modal: true, modalType: 'elderly',
-    cat: 'AI 落地案例', catLabel: '图片设计',
-    title: '适老化家居配图讲解',
-    desc: '为适老化家居场景设计的配套图文物料，从画风固定到 AI 生图再到样板间落地。',
-    hovered: false,
-  },
-  {
-    cls: 'p3', icon: null,cover: jingtianCover, modal: true, modalType: 'digital',
-    cat: 'AI 数字人 · 2026', catLabel: 'AI 带货视频',
-    title: 'AI 数字人带货视频',
-    desc: '借助「即创」数字人工具 + ChatGPT/Kimi 脚本 + 寻鱼素材，智能生成口型对准的带货视频。',
-    hovered: false,
-  },
-  {
-    cls: 'p4', icon: null,cover: oldPhotoCover, modal: true, modalType: 'photo',
-    cat: 'AI 修复 · 2026', catLabel: 'AI 老照片修复',
-    title: 'AI 老照片高清修复',
-    desc: '以 ComfyUI 工作流为主、PS 为辅，高清放大修复老照片，可配合 AI 视频实现商业变现。',
-    hovered: false,
-  },
-  {
-    cls: 'p5', icon: null,cover: openclawCover, modal: true, modalType: 'openclaw',
-    cat: 'AI 自动化 · 2026', catLabel: 'AI 远程操控',
-    title: '养龙虾 OpenClaw',
-    desc: '腾讯云部署 OpenClaw，通过 QQ 聊天远程操控电脑，多 Skills 组合完成复杂自动化任务。',
-    hovered: false,
-  },
-])
+// 根据作品标题智能匹配旧的 Modal 类型
+// 规则:数据库里如果新增的作品,标题没有这些关键词,就不弹窗(将来可以做后台编辑)
+function pickModalType(title) {
+  if (!title) return null
+  if (title.includes('英雄联盟'))   return 'lol'
+  if (title.includes('适老化'))     return 'elderly'
+  if (title.includes('数字人'))     return 'digital'
+  if (title.includes('老照片'))     return 'photo'
+  if (title.includes('OpenClaw') || title.includes('龙虾')) return 'openclaw'
+  return null
+}
+
+onMounted(async () => {
+  try {
+    const data = await fetchWorks()
+    works.value = data.map(w => ({
+      ...w,
+      cover: resolveAsset(w.cover_url),
+      modalType: pickModalType(w.title),
+      hovered: false
+    }))
+  } catch (err) {
+    error.value = err.message || '网络错误'
+  } finally {
+    loading.value = false
+    // 数据加载完后,再次触发 reveal 检测(因为新元素是动态插入的)
+    await nextTick()
+    window.dispatchEvent(new Event('scroll'))
+  }
+})
 </script>
 
 <style scoped>
@@ -138,6 +142,17 @@ section {
   background: linear-gradient(135deg, var(--accent), var(--accent2));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
+
+/* 加载/错误态 */
+.loading-state, .error-state {
+  text-align: center; padding: 80px 20px; color: var(--muted); font-size: 14px;
+}
+.loading-spinner {
+  width: 36px; height: 36px; border: 3px solid rgba(249,115,22,0.15);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.9s linear infinite; margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .portfolio-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 
@@ -181,7 +196,6 @@ section {
   background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.4), transparent 70%);
 }
 .p1 .thumb-glow { background: none; }
-.thumb-icon { font-size: 64px; position: relative; z-index: 1; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15)); }
 
 .portfolio-label {
   position: absolute; bottom: 0; left: 0; right: 0;
