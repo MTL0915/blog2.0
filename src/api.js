@@ -4,7 +4,8 @@
 // ============================================
 
 const API_BASE = import.meta.env.VITE_API_BASE
-const ASSET_BASE = API_BASE.replace('/api', '')
+// 去掉末尾的 /api(用正则确保只去掉最后的 /api,避免把域名里的 api 也替换了)
+const ASSET_BASE = API_BASE.replace(/\/api\/?$/, '')
 
 async function get(path) {
   const res = await fetch(`${API_BASE}${path}`)
