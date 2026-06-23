@@ -1,5 +1,5 @@
 export const profile = {
-  name: '你的名字',
+  name: '马天乐',
   role: 'AIGC 训练师 / AI 内容创作者',
   headline: '记录 AI 作品、训练方法与内容生产流程',
   summary:

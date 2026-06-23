@@ -1,3 +1,5 @@
+import COS from 'cos-js-sdk-v5'
+
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
   || (import.meta.env.DEV ? 'http://127.0.0.1:3000' : 'https://api.matianle.com')
 
@@ -8,6 +10,7 @@ export async function fetchSiteContent() {
     works: payload.works.map((work) => ({
       ...work,
       cover: resolveApiAsset(work.cover),
+      videoUrl: resolveApiAsset(work.videoUrl),
     })),
   }
 }
@@ -79,6 +82,83 @@ export async function uploadImage(dataUrl, token) {
     method: 'POST',
     token,
     body: { dataUrl },
+  })
+}
+
+export async function uploadMedia(file, token) {
+  try {
+    return await uploadToCos(file, token)
+  } catch (error) {
+    if (!import.meta.env.DEV) throw error
+    const dataUrl = await fileToDataUrl(file)
+    return uploadImage(dataUrl, token)
+  }
+}
+
+async function uploadToCos(file, token) {
+  const mediaType = file.type.startsWith('video/') ? 'video' : 'image'
+  const extension = getFileExtension(file)
+  const key = `portfolio/${mediaType}s/${new Date().toISOString().slice(0, 10)}/${Date.now()}-${Math.random()
+    .toString(16)
+    .slice(2)}.${extension}`
+  const config = await request('/api/admin/media/credentials', {
+    method: 'POST',
+    token,
+    body: { key, type: mediaType },
+  })
+
+  if (!config.enabled) throw new Error(config.reason || 'COS is not configured')
+
+  const cos = new COS({
+    getAuthorization: (_, callback) => {
+      callback({
+        TmpSecretId: config.credentials.tmpSecretId,
+        TmpSecretKey: config.credentials.tmpSecretKey,
+        SecurityToken: config.credentials.sessionToken,
+        StartTime: config.startTime,
+        ExpiredTime: config.expiredTime,
+      })
+    },
+  })
+
+  await new Promise((resolve, reject) => {
+    cos.uploadFile(
+      {
+        Bucket: config.bucket,
+        Region: config.region,
+        Key: config.key,
+        Body: file,
+        SliceSize: 5 * 1024 * 1024,
+      },
+      (error) => {
+        if (error) reject(error)
+        else resolve()
+      },
+    )
+  })
+
+  return { url: config.publicUrl, mediaType, mime: file.type }
+}
+
+function getFileExtension(file) {
+  const nameExt = file.name.split('.').pop()?.toLowerCase()
+  if (nameExt) return nameExt.replace(/[^a-z0-9]/g, '') || 'bin'
+  if (file.type === 'image/jpeg') return 'jpg'
+  if (file.type === 'image/png') return 'png'
+  if (file.type === 'image/webp') return 'webp'
+  if (file.type === 'image/gif') return 'gif'
+  if (file.type === 'video/mp4') return 'mp4'
+  if (file.type === 'video/webm') return 'webm'
+  if (file.type === 'video/quicktime') return 'mov'
+  return 'bin'
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(new Error('文件读取失败'))
+    reader.readAsDataURL(file)
   })
 }
 

@@ -24,7 +24,7 @@ import {
   resetContent,
   updatePost,
   updateWork,
-  uploadImage,
+  uploadMedia,
 } from './services/api'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -76,6 +76,8 @@ function createWorkDraft(work) {
         summary: work.summary,
         detail: work.detail,
         cover: work.cover,
+        mediaType: work.mediaType || (work.videoUrl ? 'video' : 'image'),
+        videoUrl: work.videoUrl || '',
         tagsText: work.tags.join('，'),
       }
     : {
@@ -86,6 +88,8 @@ function createWorkDraft(work) {
         summary: '',
         detail: '',
         cover: '',
+        mediaType: 'image',
+        videoUrl: '',
         tagsText: '',
       }
 }
@@ -172,6 +176,8 @@ function workPayload() {
     summary: editDraft.value.summary.trim(),
     detail: editDraft.value.detail.trim(),
     cover: editDraft.value.cover.trim(),
+    mediaType: editDraft.value.mediaType,
+    videoUrl: editDraft.value.videoUrl.trim(),
     tags: editDraft.value.tagsText
       .split(/[，,]/)
       .map((tag) => tag.trim())
@@ -218,18 +224,39 @@ function removeWork() {
 function handleCoverUpload(event) {
   const file = event.target.files?.[0]
   if (!file) return
-  const reader = new FileReader()
-  reader.onload = () => {
-    uploadImage(String(reader.result), adminToken.value)
-      .then(({ url }) => {
-        editDraft.value.cover = url.startsWith('http') ? url : `${API_BASE_URL}${url}`
-        saveMessage.value = '图片已上传，记得保存修改'
-      })
-      .catch((error) => {
-        apiError.value = error.message
-      })
-  }
-  reader.readAsDataURL(file)
+  uploadMedia(file, adminToken.value)
+    .then(({ url }) => {
+      editDraft.value.cover = url.startsWith('http') ? url : `${API_BASE_URL}${url}`
+      saveMessage.value = '封面已上传，记得保存修改'
+    })
+    .catch((error) => {
+      apiError.value = error.message
+    })
+    .finally(() => {
+      event.target.value = ''
+    })
+}
+
+function handleVideoUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  editDraft.value.mediaType = 'video'
+  saveMessage.value = '视频上传中，请稍等'
+  uploadMedia(file, adminToken.value)
+    .then(({ url }) => {
+      editDraft.value.videoUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`
+      saveMessage.value = '视频已上传，记得保存修改'
+    })
+    .catch((error) => {
+      apiError.value = error.message
+    })
+    .finally(() => {
+      event.target.value = ''
+    })
+}
+
+function workPreviewUrl(work) {
+  return work.mediaType === 'video' && work.videoUrl ? work.videoUrl : work.cover
 }
 
 function selectAdminPost(post) {
@@ -370,7 +397,7 @@ onBeforeUnmount(() => {
     <aside class="admin-sidebar">
       <a class="brand admin-brand" href="#home" aria-label="返回前台">
         <span></span>
-        <strong>AI Worklog</strong>
+        <strong>马天乐ai个人网站</strong>
       </a>
       <nav v-if="adminToken" aria-label="后台导航">
         <a href="#admin" :class="{ active: adminSection === 'works' }" @click.prevent="adminSection = 'works'">作品管理</a>
@@ -451,7 +478,11 @@ onBeforeUnmount(() => {
                 :class="{ selected: activeAdminWorkId === work.id }"
                 @click="selectAdminWork(work)"
               >
-                <img :src="work.cover" :alt="work.title" />
+                <div class="admin-thumb">
+                  <video v-if="work.mediaType === 'video' && work.videoUrl" :src="work.videoUrl" muted playsinline preload="metadata"></video>
+                  <img v-else :src="work.cover" :alt="work.title" />
+                  <span v-if="work.mediaType === 'video'">VIDEO</span>
+                </div>
                 <div>
                   <strong>{{ work.title }}</strong>
                   <span>{{ work.date }} · {{ categories.find((item) => item.id === work.type)?.label }}</span>
@@ -475,10 +506,22 @@ onBeforeUnmount(() => {
               </select>
             </label>
             <label>日期<input v-model="editDraft.date" /></label>
+            <label>
+              媒体类型
+              <select v-model="editDraft.mediaType">
+                <option value="image">图片作品</option>
+                <option value="video">视频作品</option>
+              </select>
+            </label>
             <label>封面 URL<input v-model="editDraft.cover" /></label>
             <label class="upload-field">
               上传封面
               <input type="file" accept="image/*" @change="handleCoverUpload" />
+            </label>
+            <label>视频 URL<input v-model="editDraft.videoUrl" placeholder="视频作品可填写外链或上传视频" /></label>
+            <label class="upload-field">
+              上传视频
+              <input type="file" accept="video/mp4,video/webm,video/quicktime,.mov" @change="handleVideoUpload" />
             </label>
             <label>标签<input v-model="editDraft.tagsText" /></label>
             <label>摘要<textarea v-model="editDraft.summary"></textarea></label>
@@ -558,7 +601,7 @@ onBeforeUnmount(() => {
 
   <main v-else class="blog-shell">
     <header class="topbar">
-      <a class="brand" href="#home" aria-label="返回首页"><span></span><strong>AI Worklog</strong></a>
+      <a class="brand" href="#home" aria-label="返回首页"><span></span><strong>马天乐ai个人网站</strong></a>
       <nav aria-label="主导航"><a v-for="item in navItems" :key="item.href" :href="item.href">{{ item.label }}</a></nav>
       <a class="contact-link" href="#contact">联系</a>
     </header>
@@ -582,7 +625,11 @@ onBeforeUnmount(() => {
       </div>
       <div class="filter-bar"><button v-for="item in categories" :key="item.id" type="button" :class="{ active: activeCategory === item.id }" @click="activeCategory = item.id">{{ item.label }}</button></div>
       <div class="recent-strip">
-        <article v-for="work in works.slice(0, 2)" :key="work.id" @click="openWork(work)"><img :src="work.cover" :alt="work.title" /><div><span>{{ work.date }}</span><strong>{{ work.title }}</strong></div></article>
+        <article v-for="work in works.slice(0, 2)" :key="work.id" @click="openWork(work)">
+          <video v-if="work.mediaType === 'video' && work.videoUrl" :src="work.videoUrl" muted playsinline preload="metadata"></video>
+          <img v-else :src="work.cover" :alt="work.title" />
+          <div><span>{{ work.date }}<b v-if="work.mediaType === 'video'">VIDEO</b></span><strong>{{ work.title }}</strong></div>
+        </article>
         <a href="#notes"><span>{{ posts[0]?.date }}</span><strong>{{ posts[0]?.title }}</strong></a>
       </div>
     </section>
@@ -590,14 +637,17 @@ onBeforeUnmount(() => {
     <section class="featured-section section-block">
       <div class="section-title"><p class="eyebrow">FEATURED</p><h2>精选展示</h2></div>
       <article v-if="featuredWork" class="featured-card motion-card" @click="openWork(featuredWork)">
-        <div class="featured-media parallax-image"><img :src="featuredWork.cover" :alt="featuredWork.title" /></div>
+        <div class="featured-media parallax-image">
+          <video v-if="featuredWork.mediaType === 'video' && featuredWork.videoUrl" :src="featuredWork.videoUrl" muted loop playsinline preload="metadata"></video>
+          <img v-else :src="featuredWork.cover" :alt="featuredWork.title" />
+        </div>
         <div class="featured-copy"><span>{{ featuredWork.date }}</span><h3>{{ featuredWork.title }}</h3><p>{{ featuredWork.summary }}</p><div><b v-for="tag in featuredWork.tags" :key="tag">{{ tag }}</b></div></div>
       </article>
     </section>
 
     <section class="works-section section-block" id="works">
       <div class="section-title"><p class="eyebrow">AI WORKS</p><h2>作品归档</h2></div>
-      <div class="work-grid"><article v-for="work in filteredWorks" :key="work.id" class="work-card motion-card" @click="openWork(work)"><div class="work-thumb parallax-image"><img :src="work.cover" :alt="work.title" /></div><div class="work-content"><span>{{ work.date }}</span><h3>{{ work.title }}</h3><p>{{ work.summary }}</p><div class="tag-list"><b v-for="tag in work.tags" :key="tag">{{ tag }}</b></div></div></article></div>
+      <div class="work-grid"><article v-for="work in filteredWorks" :key="work.id" class="work-card motion-card" @click="openWork(work)"><div class="work-thumb parallax-image"><video v-if="work.mediaType === 'video' && work.videoUrl" :src="work.videoUrl" muted loop playsinline preload="metadata"></video><img v-else :src="work.cover" :alt="work.title" /><span v-if="work.mediaType === 'video'" class="media-badge">VIDEO</span></div><div class="work-content"><span>{{ work.date }}</span><h3>{{ work.title }}</h3><p>{{ work.summary }}</p><div class="tag-list"><b v-for="tag in work.tags" :key="tag">{{ tag }}</b></div></div></article></div>
     </section>
 
     <section class="notes-section section-block" id="notes">
@@ -616,7 +666,7 @@ onBeforeUnmount(() => {
     </section>
 
     <div v-if="selectedWork" class="modal-backdrop" @click.self="closeWork">
-      <article class="work-dialog"><button type="button" aria-label="关闭" @click="closeWork">×</button><div class="dialog-image dialog-reveal"><img :src="selectedWork.cover" :alt="selectedWork.title" /></div><div class="dialog-copy"><p class="eyebrow dialog-reveal">CASE DETAIL</p><h2 class="dialog-reveal">{{ selectedWork.title }}</h2><p class="dialog-reveal">{{ selectedWork.detail }}</p><div class="tag-list dialog-reveal"><b v-for="tag in selectedWork.tags" :key="tag">{{ tag }}</b></div></div></article>
+      <article class="work-dialog"><button type="button" aria-label="关闭" @click="closeWork">×</button><div class="dialog-image dialog-reveal"><video v-if="selectedWork.mediaType === 'video' && selectedWork.videoUrl" :src="selectedWork.videoUrl" controls playsinline preload="metadata"></video><img v-else :src="selectedWork.cover" :alt="selectedWork.title" /></div><div class="dialog-copy"><p class="eyebrow dialog-reveal">CASE DETAIL</p><h2 class="dialog-reveal">{{ selectedWork.title }}</h2><p class="dialog-reveal">{{ selectedWork.detail }}</p><div class="tag-list dialog-reveal"><b v-for="tag in selectedWork.tags" :key="tag">{{ tag }}</b></div></div></article>
     </div>
   </main>
 </template>
