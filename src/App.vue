@@ -56,10 +56,12 @@ const postDraft = ref(createPostDraft(posts.value[0]))
 let ctx
 
 const isAdmin = computed(() => adminOnly || (adminEnabled && currentHash.value === '#admin'))
-const featuredWork = computed(() => works.value[0])
+const publishedWorks = computed(() => works.value.filter((work) => work.status !== 'draft'))
+const publishedPosts = computed(() => posts.value.filter((post) => post.status !== 'draft'))
+const featuredWork = computed(() => publishedWorks.value[0])
 const filteredWorks = computed(() => {
-  if (activeCategory.value === 'all') return works.value
-  return works.value.filter((work) => work.type === activeCategory.value)
+  if (activeCategory.value === 'all') return publishedWorks.value
+  return publishedWorks.value.filter((work) => work.type === activeCategory.value)
 })
 
 function clone(value) {
@@ -625,12 +627,12 @@ onBeforeUnmount(() => {
       </div>
       <div class="filter-bar"><button v-for="item in categories" :key="item.id" type="button" :class="{ active: activeCategory === item.id }" @click="activeCategory = item.id">{{ item.label }}</button></div>
       <div class="recent-strip">
-        <article v-for="work in works.slice(0, 2)" :key="work.id" @click="openWork(work)">
+        <article v-for="work in publishedWorks.slice(0, 2)" :key="work.id" @click="openWork(work)">
           <video v-if="work.mediaType === 'video' && work.videoUrl" :src="work.videoUrl" muted playsinline preload="metadata"></video>
           <img v-else :src="work.cover" :alt="work.title" />
           <div><span>{{ work.date }}<b v-if="work.mediaType === 'video'">VIDEO</b></span><strong>{{ work.title }}</strong></div>
         </article>
-        <a href="#notes"><span>{{ posts[0]?.date }}</span><strong>{{ posts[0]?.title }}</strong></a>
+        <a href="#notes"><span>{{ publishedPosts[0]?.date }}</span><strong>{{ publishedPosts[0]?.title }}</strong></a>
       </div>
     </section>
 
@@ -652,7 +654,7 @@ onBeforeUnmount(() => {
 
     <section class="notes-section section-block" id="notes">
       <div class="section-title"><p class="eyebrow">BLOG NOTES</p><h2>最新笔记</h2></div>
-      <div class="note-list"><article v-for="post in posts" :key="post.id" class="note-card motion-card"><time>{{ post.date }}</time><h3>{{ post.title }}</h3><p>{{ post.summary }}</p><span>{{ post.readTime }} · {{ categories.find((item) => item.id === post.category)?.label }}</span></article></div>
+      <div class="note-list"><article v-for="post in publishedPosts" :key="post.id" class="note-card motion-card"><time>{{ post.date }}</time><h3>{{ post.title }}</h3><p>{{ post.summary }}</p><span>{{ post.readTime }} · {{ categories.find((item) => item.id === post.category)?.label }}</span></article></div>
     </section>
 
     <section class="experience-section section-block" id="experience">
