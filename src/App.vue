@@ -34,6 +34,7 @@ const adminOnly = import.meta.env.VITE_ADMIN_ONLY === 'true'
 const adminEnabled = adminOnly || import.meta.env.VITE_ADMIN_ENABLED === 'true'
 const activeCategory = ref('all')
 const selectedWork = ref(null)
+const activeVideoPreview = ref('')
 const adminToken = ref(window.localStorage.getItem('ai-worklog-auth-token') || '')
 const adminUser = ref(null)
 const loginForm = ref({ username: 'admin', password: '' })
@@ -330,6 +331,7 @@ function resetAdminWorks() {
 
 function openWork(work) {
   selectedWork.value = work
+  activeVideoPreview.value = ''
   document.body.classList.add('modal-open')
   nextTick(() => {
     gsap.fromTo('.work-dialog', { y: 54, opacity: 0, scale: 0.96 }, { y: 0, opacity: 1, scale: 1, duration: 0.72, ease: 'power4.out' })
@@ -346,9 +348,14 @@ function closeWork() {
     ease: 'power2.in',
     onComplete: () => {
       selectedWork.value = null
+      activeVideoPreview.value = ''
       document.body.classList.remove('modal-open')
     },
   })
+}
+
+function loadVideoPreview(url) {
+  activeVideoPreview.value = url
 }
 
 function syncHash() {
@@ -628,8 +635,7 @@ onBeforeUnmount(() => {
       <div class="filter-bar"><button v-for="item in categories" :key="item.id" type="button" :class="{ active: activeCategory === item.id }" @click="activeCategory = item.id">{{ item.label }}</button></div>
       <div class="recent-strip">
         <article v-for="work in publishedWorks.slice(0, 2)" :key="work.id" @click="openWork(work)">
-          <video v-if="work.mediaType === 'video' && work.videoUrl" :src="work.videoUrl" muted playsinline preload="metadata"></video>
-          <img v-else :src="work.cover" :alt="work.title" />
+          <img :src="work.cover" :alt="work.title" />
           <div><span>{{ work.date }}<b v-if="work.mediaType === 'video'">VIDEO</b></span><strong>{{ work.title }}</strong></div>
         </article>
         <a href="#notes"><span>{{ publishedPosts[0]?.date }}</span><strong>{{ publishedPosts[0]?.title }}</strong></a>
@@ -640,8 +646,8 @@ onBeforeUnmount(() => {
       <div class="section-title"><p class="eyebrow">FEATURED</p><h2>精选展示</h2></div>
       <article v-if="featuredWork" class="featured-card motion-card" @click="openWork(featuredWork)">
         <div class="featured-media parallax-image">
-          <video v-if="featuredWork.mediaType === 'video' && featuredWork.videoUrl" :src="featuredWork.videoUrl" muted loop playsinline preload="metadata"></video>
-          <img v-else :src="featuredWork.cover" :alt="featuredWork.title" />
+          <img :src="featuredWork.cover" :alt="featuredWork.title" />
+          <span v-if="featuredWork.mediaType === 'video'" class="media-badge">VIDEO</span>
         </div>
         <div class="featured-copy"><span>{{ featuredWork.date }}</span><h3>{{ featuredWork.title }}</h3><p>{{ featuredWork.summary }}</p><div><b v-for="tag in featuredWork.tags" :key="tag">{{ tag }}</b></div></div>
       </article>
@@ -649,7 +655,7 @@ onBeforeUnmount(() => {
 
     <section class="works-section section-block" id="works">
       <div class="section-title"><p class="eyebrow">AI WORKS</p><h2>作品归档</h2></div>
-      <div class="work-grid"><article v-for="work in filteredWorks" :key="work.id" class="work-card motion-card" @click="openWork(work)"><div class="work-thumb parallax-image"><video v-if="work.mediaType === 'video' && work.videoUrl" :src="work.videoUrl" muted loop playsinline preload="metadata"></video><img v-else :src="work.cover" :alt="work.title" /><span v-if="work.mediaType === 'video'" class="media-badge">VIDEO</span></div><div class="work-content"><span>{{ work.date }}</span><h3>{{ work.title }}</h3><p>{{ work.summary }}</p><div class="tag-list"><b v-for="tag in work.tags" :key="tag">{{ tag }}</b></div></div></article></div>
+      <div class="work-grid"><article v-for="work in filteredWorks" :key="work.id" class="work-card motion-card" @click="openWork(work)"><div class="work-thumb parallax-image"><img :src="work.cover" :alt="work.title" /><span v-if="work.mediaType === 'video'" class="media-badge">VIDEO</span></div><div class="work-content"><span>{{ work.date }}</span><h3>{{ work.title }}</h3><p>{{ work.summary }}</p><div class="tag-list"><b v-for="tag in work.tags" :key="tag">{{ tag }}</b></div></div></article></div>
     </section>
 
     <section class="notes-section section-block" id="notes">
@@ -668,7 +674,7 @@ onBeforeUnmount(() => {
     </section>
 
     <div v-if="selectedWork" class="modal-backdrop" @click.self="closeWork">
-      <article class="work-dialog"><button type="button" aria-label="关闭" @click="closeWork">×</button><div class="dialog-image dialog-reveal"><video v-if="selectedWork.mediaType === 'video' && selectedWork.videoUrl" :src="selectedWork.videoUrl" controls playsinline preload="metadata"></video><img v-else :src="selectedWork.cover" :alt="selectedWork.title" /></div><div class="dialog-copy"><p class="eyebrow dialog-reveal">CASE DETAIL</p><h2 class="dialog-reveal">{{ selectedWork.title }}</h2><p class="dialog-reveal">{{ selectedWork.detail }}</p><div class="tag-list dialog-reveal"><b v-for="tag in selectedWork.tags" :key="tag">{{ tag }}</b></div></div></article>
+      <article class="work-dialog"><button type="button" aria-label="关闭" @click="closeWork">×</button><div class="dialog-image dialog-reveal"><template v-if="selectedWork.mediaType === 'video' && selectedWork.videoUrl"><video v-if="activeVideoPreview === selectedWork.videoUrl" :src="selectedWork.videoUrl" controls playsinline preload="none"></video><button v-else class="video-load-button" type="button" @click="loadVideoPreview(selectedWork.videoUrl)">播放视频</button><img :src="selectedWork.cover" :alt="selectedWork.title" /></template><img v-else :src="selectedWork.cover" :alt="selectedWork.title" /></div><div class="dialog-copy"><p class="eyebrow dialog-reveal">CASE DETAIL</p><h2 class="dialog-reveal">{{ selectedWork.title }}</h2><p class="dialog-reveal">{{ selectedWork.detail }}</p><div class="tag-list dialog-reveal"><b v-for="tag in selectedWork.tags" :key="tag">{{ tag }}</b></div></div></article>
     </div>
   </main>
 </template>

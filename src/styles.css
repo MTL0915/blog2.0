@@ -815,7 +815,23 @@ video {
 }
 
 .dialog-image video {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
   object-fit: contain;
+}
+
+.video-load-button {
+  position: absolute;
+  inset: auto auto 24px 24px;
+  z-index: 3;
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+  color: #0b120d;
+  background: #b9ff46;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+  font-weight: 900;
 }
 
 .featured-copy {
