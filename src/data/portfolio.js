@@ -34,6 +34,8 @@ export const categories = [
 export const works = [
   {
     id: 'work-001',
+    sortOrder: 10,
+    isFeatured: true,
     type: 'visual',
     title: 'AI 产品视觉探索',
     date: '2026.05',
@@ -46,6 +48,8 @@ export const works = [
   },
   {
     id: 'work-002',
+    sortOrder: 20,
+    isFeatured: false,
     type: 'prompt',
     title: '品牌风格 Prompt 矩阵',
     date: '2026.04',
@@ -58,6 +62,8 @@ export const works = [
   },
   {
     id: 'work-003',
+    sortOrder: 30,
+    isFeatured: false,
     type: 'workflow',
     title: 'AIGC 内容质检流程',
     date: '2026.03',
@@ -70,6 +76,8 @@ export const works = [
   },
   {
     id: 'work-004',
+    sortOrder: 40,
+    isFeatured: false,
     type: 'visual',
     title: 'AI 角色氛围图集',
     date: '2026.02',

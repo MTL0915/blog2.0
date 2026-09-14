@@ -653,7 +653,29 @@ video {
   font-size: 32px;
 }
 
-.profile-card span {
+.hero-contact-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(238, 244, 240, 0.1);
+}
+
+.hero-contact-list a,
+.hero-contact-list span {
+  margin: 0;
+  color: rgba(238, 244, 240, 0.72);
+  font-size: 13px;
+  line-height: 1.35;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.hero-contact-list a:hover {
+  color: #b9ff46;
+}
+
+.profile-card > span {
   display: inline-flex;
   margin-top: 18px;
   color: #b9ff46;

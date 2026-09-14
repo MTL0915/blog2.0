@@ -57,9 +57,9 @@ const postDraft = ref(createPostDraft(posts.value[0]))
 let ctx
 
 const isAdmin = computed(() => adminOnly || (adminEnabled && currentHash.value === '#admin'))
-const publishedWorks = computed(() => works.value.filter((work) => work.status !== 'draft'))
+const publishedWorks = computed(() => sortWorks(works.value.filter((work) => work.status !== 'draft')))
 const publishedPosts = computed(() => posts.value.filter((post) => post.status !== 'draft'))
-const featuredWork = computed(() => publishedWorks.value[0])
+const featuredWork = computed(() => publishedWorks.value.find((work) => work.isFeatured) || publishedWorks.value[0])
 const filteredWorks = computed(() => {
   if (activeCategory.value === 'all') return publishedWorks.value
   return publishedWorks.value.filter((work) => work.type === activeCategory.value)
@@ -67,6 +67,10 @@ const filteredWorks = computed(() => {
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value))
+}
+
+function sortWorks(items) {
+  return [...items].sort((a, b) => (Number(a.sortOrder) || 0) - (Number(b.sortOrder) || 0) || String(b.date || '').localeCompare(String(a.date || '')) || String(a.id).localeCompare(String(b.id)))
 }
 
 function createWorkDraft(work) {
@@ -628,7 +632,16 @@ onBeforeUnmount(() => {
           <div class="hero-actions"><a href="#works">查看作品</a><a href="#notes">阅读笔记</a></div>
         </div>
         <aside class="hero-panel">
-          <div class="profile-card"><div class="avatar">AI</div><p>{{ profile.role }}</p><h2>{{ profile.name }}</h2><span>{{ profile.availability }}</span></div>
+          <div class="profile-card">
+            <div class="avatar">AI</div>
+            <p>{{ profile.role }}</p>
+            <h2>{{ profile.name }}</h2>
+            <div class="hero-contact-list">
+              <a :href="`mailto:${profile.email}`">{{ profile.email }}</a>
+              <span>{{ profile.phone }}</span>
+            </div>
+            <span>{{ profile.availability }}</span>
+          </div>
           <div class="metric-grid"><div v-for="item in metrics" :key="item.label"><strong>{{ item.value }}</strong><span>{{ item.label }}</span></div></div>
         </aside>
       </div>
