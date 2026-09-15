@@ -369,12 +369,26 @@ function closeWork() {
   })
 }
 
+async function playVideoByUrl(url) {
+  await nextTick()
+  const video = [...document.querySelectorAll('video')].find((item) => item.currentSrc === url || item.src === url)
+  if (!video) return
+  try {
+    await video.play()
+  } catch {
+    video.muted = true
+    await video.play().catch(() => {})
+  }
+}
+
 function loadVideoPreview(url) {
   activeVideoPreview.value = url
+  playVideoByUrl(url)
 }
 
 function loadModelVideo(url) {
   activeModelVideo.value = url
+  playVideoByUrl(url)
 }
 
 function syncHash() {
