@@ -3,7 +3,7 @@ export const profile = {
   role: 'AIGC 训练师 / AI 内容创作者',
   headline: '记录 AI 作品、训练方法与内容生产流程',
   summary:
-    '这是一个面向简历展示的个人 AI 作品博客。我在这里整理生成式 AI 作品、Prompt 实验、模型评估方法和项目复盘，让招聘方快速了解我的审美、方法论和交付能力。',
+    '这是一个面向简历展示的个人 AI 作品博客。我在这里整理生成式 AI 作品、提示词实验、工作流方法、技能栈和模型对比，让招聘方快速了解我的审美、方法论和交付能力。',
   email: 'hello@example.com',
   phone: '+86 138 0000 0000',
   location: 'Shanghai / Remote',
@@ -11,24 +11,26 @@ export const profile = {
 }
 
 export const navItems = [
-  { label: '首页', href: '#home' },
   { label: '作品', href: '#works' },
-  { label: '笔记', href: '#notes' },
-  { label: '经历', href: '#experience' },
+  { label: '提示词', href: '#prompts' },
+  { label: '工作流', href: '#workflow' },
+  { label: 'Skills', href: '#skills' },
+  { label: '模型对比', href: '#models' },
 ]
 
 export const metrics = [
   { label: '精选作品', value: '18+' },
   { label: 'Prompt 实验', value: '120+' },
-  { label: '项目复盘', value: '9' },
+  { label: '模型对比', value: '10+' },
 ]
 
 export const categories = [
   { id: 'all', label: '全部' },
-  { id: 'visual', label: '视觉作品' },
-  { id: 'prompt', label: 'Prompt' },
+  { id: 'visual', label: '作品' },
+  { id: 'prompt', label: '提示词' },
   { id: 'workflow', label: '工作流' },
-  { id: 'review', label: '复盘' },
+  { id: 'skills', label: 'Skills' },
+  { id: 'model', label: '模型对比' },
 ]
 
 export const works = [
@@ -93,7 +95,7 @@ export const works = [
 export const posts = [
   {
     id: 'post-001',
-    category: 'review',
+    category: 'skills',
     title: '如何判断一张 AI 图是否能用于真实项目？',
     date: '2026.05.18',
     readTime: '6 min',
@@ -105,7 +107,7 @@ export const posts = [
     title: '我的 Prompt 记录表结构',
     date: '2026.04.27',
     readTime: '4 min',
-    summary: '记录模型、参数、变量、评分和复盘结论，比单纯收藏提示词更有价值。',
+    summary: '记录模型、参数、变量、评分和优化结论，比单纯收藏提示词更有价值。',
   },
   {
     id: 'post-003',
@@ -134,4 +136,4 @@ export const experience = [
   },
 ]
 
-export const skills = ['Prompt 工程', '图像生成', '内容质检', '样本标注', '品牌视觉', '项目复盘']
+export const skills = ['Prompt 工程', '图像生成', '视频生成', '工作流搭建', '模型评估', '内容质检', '样本标注', '品牌视觉']

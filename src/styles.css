@@ -961,6 +961,28 @@ video {
   font-size: 13px;
 }
 
+.empty-section {
+  padding: 28px;
+  border: 1px solid rgba(238, 244, 240, 0.1);
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgba(185, 255, 70, 0.08), transparent 34%),
+    rgba(255, 255, 255, 0.045);
+}
+
+.empty-section strong {
+  display: block;
+  color: #eef4f0;
+  font-size: 22px;
+}
+
+.empty-section p {
+  max-width: 620px;
+  margin: 10px 0 0;
+  color: rgba(238, 244, 240, 0.58);
+  line-height: 1.7;
+}
+
 .experience-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;

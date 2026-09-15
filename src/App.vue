@@ -60,6 +60,9 @@ const isAdmin = computed(() => adminOnly || (adminEnabled && currentHash.value =
 const publishedWorks = computed(() => sortWorks(works.value.filter((work) => work.status !== 'draft')))
 const publishedPosts = computed(() => posts.value.filter((post) => post.status !== 'draft'))
 const featuredWork = computed(() => publishedWorks.value.find((work) => work.isFeatured) || publishedWorks.value[0])
+const promptPosts = computed(() => publishedPosts.value.filter((post) => post.category === 'prompt'))
+const workflowPosts = computed(() => publishedPosts.value.filter((post) => post.category === 'workflow'))
+const modelWorks = computed(() => publishedWorks.value.filter((work) => work.type === 'model'))
 const filteredWorks = computed(() => {
   if (activeCategory.value === 'all') return publishedWorks.value
   return publishedWorks.value.filter((work) => work.type === activeCategory.value)
@@ -114,7 +117,7 @@ function createPostDraft(post) {
     : {
         id: '',
         title: '',
-        category: 'review',
+        category: 'prompt',
         date: new Date().toISOString().slice(0, 10).replaceAll('-', '.'),
         readTime: '3 min',
         summary: '',
@@ -625,11 +628,11 @@ onBeforeUnmount(() => {
           <p class="eyebrow">PERSONAL AI PORTFOLIO BLOG</p>
           <h1>
             <span class="intro-mask"><span>AI 作品、</span></span>
-            <span class="intro-mask"><span>训练笔记</span></span>
-            <span class="intro-mask muted"><span>与项目复盘</span></span>
+            <span class="intro-mask"><span>提示词系统</span></span>
+            <span class="intro-mask muted"><span>与模型对比</span></span>
           </h1>
           <p class="hero-copy">{{ profile.summary }}</p>
-          <div class="hero-actions"><a href="#works">查看作品</a><a href="#notes">阅读笔记</a></div>
+          <div class="hero-actions"><a href="#works">查看作品</a><a href="#models">模型对比</a></div>
         </div>
         <aside class="hero-panel">
           <div class="profile-card">
@@ -651,7 +654,7 @@ onBeforeUnmount(() => {
           <img :src="work.cover" :alt="work.title" />
           <div><span>{{ work.date }}<b v-if="work.mediaType === 'video'">VIDEO</b></span><strong>{{ work.title }}</strong></div>
         </article>
-        <a href="#notes"><span>{{ publishedPosts[0]?.date }}</span><strong>{{ publishedPosts[0]?.title }}</strong></a>
+        <a href="#prompts"><span>{{ promptPosts[0]?.date || publishedPosts[0]?.date }}</span><strong>{{ promptPosts[0]?.title || publishedPosts[0]?.title }}</strong></a>
       </div>
     </section>
 
@@ -671,14 +674,25 @@ onBeforeUnmount(() => {
       <div class="work-grid"><article v-for="work in filteredWorks" :key="work.id" class="work-card motion-card" @click="openWork(work)"><div class="work-thumb parallax-image"><img :src="work.cover" :alt="work.title" /><span v-if="work.mediaType === 'video'" class="media-badge">VIDEO</span></div><div class="work-content"><span>{{ work.date }}</span><h3>{{ work.title }}</h3><p>{{ work.summary }}</p><div class="tag-list"><b v-for="tag in work.tags" :key="tag">{{ tag }}</b></div></div></article></div>
     </section>
 
-    <section class="notes-section section-block" id="notes">
-      <div class="section-title"><p class="eyebrow">BLOG NOTES</p><h2>最新笔记</h2></div>
-      <div class="note-list"><article v-for="post in publishedPosts" :key="post.id" class="note-card motion-card"><time>{{ post.date }}</time><h3>{{ post.title }}</h3><p>{{ post.summary }}</p><span>{{ post.readTime }} · {{ categories.find((item) => item.id === post.category)?.label }}</span></article></div>
+    <section class="notes-section section-block" id="prompts">
+      <div class="section-title"><p class="eyebrow">PROMPTS</p><h2>提示词</h2></div>
+      <div class="note-list"><article v-for="post in (promptPosts.length ? promptPosts : publishedPosts)" :key="post.id" class="note-card motion-card"><time>{{ post.date }}</time><h3>{{ post.title }}</h3><p>{{ post.summary }}</p><span>{{ post.readTime }} · {{ categories.find((item) => item.id === post.category)?.label }}</span></article></div>
     </section>
 
-    <section class="experience-section section-block" id="experience">
-      <div class="section-title"><p class="eyebrow">EXPERIENCE</p><h2>经历与能力</h2></div>
+    <section class="notes-section section-block" id="workflow">
+      <div class="section-title"><p class="eyebrow">WORKFLOW</p><h2>工作流</h2></div>
+      <div class="note-list"><article v-for="post in workflowPosts" :key="post.id" class="note-card motion-card"><time>{{ post.date }}</time><h3>{{ post.title }}</h3><p>{{ post.summary }}</p><span>{{ post.readTime }} · {{ categories.find((item) => item.id === post.category)?.label }}</span></article></div>
+    </section>
+
+    <section class="experience-section section-block" id="skills">
+      <div class="section-title"><p class="eyebrow">SKILLS</p><h2>Skills</h2></div>
       <div class="experience-layout"><div class="timeline"><article v-for="item in experience" :key="item.id" class="motion-card"><time>{{ item.period }}</time><h3>{{ item.role }}</h3><strong>{{ item.company }}</strong><p>{{ item.summary }}</p></article></div><div class="skill-panel motion-card"><span v-for="skill in skills" :key="skill">{{ skill }}</span></div></div>
+    </section>
+
+    <section class="works-section section-block" id="models">
+      <div class="section-title"><p class="eyebrow">MODEL COMPARISON</p><h2>模型对比</h2></div>
+      <div v-if="modelWorks.length" class="work-grid"><article v-for="work in modelWorks" :key="work.id" class="work-card motion-card" @click="openWork(work)"><div class="work-thumb parallax-image"><img :src="work.cover" :alt="work.title" /><span v-if="work.mediaType === 'video'" class="media-badge">VIDEO</span></div><div class="work-content"><span>{{ work.date }}</span><h3>{{ work.title }}</h3><p>{{ work.summary }}</p><div class="tag-list"><b v-for="tag in work.tags" :key="tag">{{ tag }}</b></div></div></article></div>
+      <div v-else class="empty-section motion-card"><strong>模型对比内容待上传</strong><p>后续把相同提示词生成的不同模型视频归类为“模型对比”，这里会自动展示。</p></div>
     </section>
 
     <section class="contact-section section-block" id="contact">
