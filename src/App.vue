@@ -35,6 +35,7 @@ const adminEnabled = adminOnly || import.meta.env.VITE_ADMIN_ENABLED === 'true'
 const activeCategory = ref('all')
 const selectedWork = ref(null)
 const activeVideoPreview = ref('')
+const activeModelVideo = ref('')
 const adminToken = ref(window.localStorage.getItem('ai-worklog-auth-token') || '')
 const adminUser = ref(null)
 const loginForm = ref({ username: 'admin', password: '' })
@@ -52,6 +53,7 @@ const experience = ref(clone(initialExperience))
 const skills = ref(clone(initialSkills))
 const posts = ref(clone(initialPosts))
 const works = ref(clone(initialWorks))
+const modelCases = ref([])
 const editDraft = ref(createWorkDraft(works.value[0]))
 const postDraft = ref(createPostDraft(posts.value[0]))
 let ctx
@@ -62,6 +64,7 @@ const publishedPosts = computed(() => posts.value.filter((post) => post.status !
 const featuredWork = computed(() => publishedWorks.value.find((work) => work.isFeatured) || publishedWorks.value[0])
 const promptPosts = computed(() => publishedPosts.value.filter((post) => post.category === 'prompt'))
 const workflowPosts = computed(() => publishedPosts.value.filter((post) => post.category === 'workflow'))
+const publishedModelCases = computed(() => sortModelCases(modelCases.value.filter((item) => item.status !== 'draft')))
 const modelWorks = computed(() => publishedWorks.value.filter((work) => work.type === 'model'))
 const filteredWorks = computed(() => {
   if (activeCategory.value === 'all') return publishedWorks.value
@@ -73,6 +76,10 @@ function clone(value) {
 }
 
 function sortWorks(items) {
+  return [...items].sort((a, b) => (Number(a.sortOrder) || 0) - (Number(b.sortOrder) || 0) || String(b.date || '').localeCompare(String(a.date || '')) || String(a.id).localeCompare(String(b.id)))
+}
+
+function sortModelCases(items) {
   return [...items].sort((a, b) => (Number(a.sortOrder) || 0) - (Number(b.sortOrder) || 0) || String(b.date || '').localeCompare(String(a.date || '')) || String(a.id).localeCompare(String(b.id)))
 }
 
@@ -132,6 +139,7 @@ function applyContent(payload) {
   skills.value = payload.skills
   posts.value = payload.posts
   works.value = payload.works
+  modelCases.value = payload.modelCases || []
 
   if (!activeAdminWorkId.value) activeAdminWorkId.value = works.value[0]?.id || ''
   if (!activeAdminPostId.value) activeAdminPostId.value = posts.value[0]?.id || ''
@@ -363,6 +371,10 @@ function closeWork() {
 
 function loadVideoPreview(url) {
   activeVideoPreview.value = url
+}
+
+function loadModelVideo(url) {
+  activeModelVideo.value = url
 }
 
 function syncHash() {
@@ -691,7 +703,37 @@ onBeforeUnmount(() => {
 
     <section class="works-section section-block" id="models">
       <div class="section-title"><p class="eyebrow">MODEL COMPARISON</p><h2>模型对比</h2></div>
-      <div v-if="modelWorks.length" class="work-grid"><article v-for="work in modelWorks" :key="work.id" class="work-card motion-card" @click="openWork(work)"><div class="work-thumb parallax-image"><img :src="work.cover" :alt="work.title" /><span v-if="work.mediaType === 'video'" class="media-badge">VIDEO</span></div><div class="work-content"><span>{{ work.date }}</span><h3>{{ work.title }}</h3><p>{{ work.summary }}</p><div class="tag-list"><b v-for="tag in work.tags" :key="tag">{{ tag }}</b></div></div></article></div>
+      <div v-if="publishedModelCases.length" class="model-case-list">
+        <article v-for="modelCase in publishedModelCases" :key="modelCase.id" class="model-case-card motion-card">
+          <div class="model-case-source">
+            <img v-if="modelCase.cover" :src="modelCase.cover" :alt="modelCase.title" />
+            <div>
+              <span>{{ modelCase.date }} · {{ modelCase.outputs.length }} 个模型输出</span>
+              <h3>{{ modelCase.title }}</h3>
+              <p>{{ modelCase.testGoal || modelCase.summary }}</p>
+              <pre>{{ modelCase.prompt }}</pre>
+            </div>
+          </div>
+          <div class="model-output-grid">
+            <article v-for="output in modelCase.outputs" :key="output.id" class="model-output-card">
+              <div class="model-video-box">
+                <video v-if="activeModelVideo === output.videoUrl" :src="output.videoUrl" controls playsinline preload="none"></video>
+                <template v-else>
+                  <img v-if="output.cover || modelCase.cover" :src="output.cover || modelCase.cover" :alt="output.modelName" />
+                  <button type="button" @click="loadModelVideo(output.videoUrl)">播放</button>
+                </template>
+              </div>
+              <div>
+                <span>{{ output.version || 'Video Model' }}</span>
+                <h4>{{ output.modelName }}</h4>
+                <p>{{ output.note }}</p>
+                <b v-if="output.score">{{ output.score }}</b>
+              </div>
+            </article>
+          </div>
+        </article>
+      </div>
+      <div v-else-if="modelWorks.length" class="work-grid"><article v-for="work in modelWorks" :key="work.id" class="work-card motion-card" @click="openWork(work)"><div class="work-thumb parallax-image"><img :src="work.cover" :alt="work.title" /><span v-if="work.mediaType === 'video'" class="media-badge">VIDEO</span></div><div class="work-content"><span>{{ work.date }}</span><h3>{{ work.title }}</h3><p>{{ work.summary }}</p><div class="tag-list"><b v-for="tag in work.tags" :key="tag">{{ tag }}</b></div></div></article></div>
       <div v-else class="empty-section motion-card"><strong>模型对比内容待上传</strong><p>后续把相同提示词生成的不同模型视频归类为“模型对比”，这里会自动展示。</p></div>
     </section>
 

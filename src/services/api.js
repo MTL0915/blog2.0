@@ -12,12 +12,25 @@ export async function fetchSiteContent() {
       cover: resolveApiAsset(work.cover),
       videoUrl: resolveApiAsset(work.videoUrl),
     })),
+    modelCases: (payload.modelCases || []).map(resolveModelCaseAssets),
   }
 }
 
 export function resolveApiAsset(url) {
   if (!url || /^(?:https?:|data:|blob:)/.test(url)) return url || ''
   return new URL(url, `${API_BASE_URL}/`).href
+}
+
+function resolveModelCaseAssets(modelCase) {
+  return {
+    ...modelCase,
+    cover: resolveApiAsset(modelCase.cover),
+    outputs: (modelCase.outputs || []).map((output) => ({
+      ...output,
+      cover: resolveApiAsset(output.cover),
+      videoUrl: resolveApiAsset(output.videoUrl),
+    })),
+  }
 }
 
 export async function loginAdmin(credentials) {
